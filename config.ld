@@ -1,0 +1,6 @@
+file = "addon/Scripts/Typewriter.lua"
+dir = "docs"
+project = "Typewriter"
+title = "Hedgewars Typewriter"
+description = "Typewriter Hedgewars Lua library"
+readme = "README.md"

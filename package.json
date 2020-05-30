@@ -1,0 +1,25 @@
+{
+  "name": "hedgewars-typewriter",
+  "version": "0.1.1",
+  "description": "Typewriter Hedgewars Lua library",
+  "scripts": {
+    "start": "npm run watch",
+    "watch": "gulp",
+    "build": "gulp build",
+    "build:docs": "ldoc --verbose --all ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:vintprox/hedgewars-typewriter.git"
+  },
+  "author": "Rodion Borisov <vintprox@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vintprox/hedgewars-typewriter/issues"
+  },
+  "homepage": "https://github.com/vintprox/hedgewars-typewriter#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-zip": "^5.0.1"
+  }
+}
