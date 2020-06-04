@@ -4,12 +4,13 @@
 
 HedgewarsScriptLoad("/Scripts/Animate.lua")
 
+local last_mission_anim
+
 --- Module defaults
 -- @table Typewriter
 -- @field utf8                            Whether to use shims in favor of strings containing Unicode characters
 -- @field Mission                         Values related to AddMissionAnim
 -- @field Mission.gear                    Gear that is being focused by camera
--- @field Mission.swh                     Whether to switch camera's position to gear during whole animation
 -- @field Mission.swh_after               Whether to switch camera's position to gear after whole animation
 -- @field Mission.caption                 Default caption for ShowMission
 -- @field Mission.subcaption              Default subcaption for ShowMission
@@ -26,11 +27,11 @@ HedgewarsScriptLoad("/Scripts/Animate.lua")
 -- @field Mission.delay_return            Delay before whole animation is considered complete (return delay)
 -- @field Mission.display_time_after      Time for ShowMission after all animations end (concurrent to the return delay)
 -- @field Mission.force_display_after     Whether to forcedly display mission panel after all animations end
+-- @field Mission.modal                   Whether mission panel will be important to look at after skipping animation
 Typewriter = {
   utf8 = false,
   Mission = {
     gear = nil,
-    swh = false,
     swh_after = true,
     caption = " ",
     subcaption = "",
@@ -46,7 +47,8 @@ Typewriter = {
     delay_text_char = 50,
     delay_return = 800,
     display_time_after = 0,
-    force_display_after = false
+    force_display_after = false,
+    modal = true
   }
 }
 
@@ -78,46 +80,68 @@ end
 function Typewriter.AddMissionAnim(overrides)
   local t = {}
   for key, value in pairs(Typewriter.Mission) do
-    t[key] = overrides[key] or value
+    if overrides[key] ~= nil then
+      t[key] = overrides[key]
+    else
+      t[key] = value
+    end
   end
+  if not t.gear then t.swh_after = false end
   local anim = {}
   if overrides.caption then
     table.insert(anim, { func = ShowMission, args = { " ", "", "", t.icon, 0, true }, swh = false })
-    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_caption_start }, swh = t.swh })
+    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_caption_start }, swh = false })
     for l = 1, string_len(t.caption) do
       if t.sound_typing then
-        table.insert(anim, { func = PlaySound, args = { t.sound_typing } })
+        table.insert(anim, { func = PlaySound, args = { t.sound_typing }, swh = false })
       end
-      table.insert(anim, { func = ShowMission, args = { string_truncate(t.caption, l), "", "", t.icon, 0, true } })
-      table.insert(anim, { func = AnimWait, args = { gear, t.delay_caption_char }, swh = t.swh })
+      table.insert(anim, { func = ShowMission, args = { string_truncate(t.caption, l), "", "", t.icon, 0, true }, swh = false })
+      table.insert(anim, { func = AnimWait, args = { gear, t.delay_caption_char }, swh = false })
     end
   end
   if overrides.subcaption then
     table.insert(anim, { func = ShowMission, args = { t.caption, "", "", t.icon, 0, true }, swh = false })
-    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_subcaption_start }, swh = t.swh })
+    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_subcaption_start }, swh = false })
     for l = 1, string_len(t.subcaption) do
       if t.sound_typing then
         table.insert(anim, { func = PlaySound, args = { t.sound_typing }, swh = false })
       end
       table.insert(anim, { func = ShowMission, args = { t.caption, string_truncate(t.subcaption, l), "", t.icon, 0, true }, swh = false })
-      table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_subcaption_char }, swh = t.swh })
+      table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_subcaption_char }, swh = false })
     end
   end
   if overrides.text then
     table.insert(anim, { func = ShowMission, args = { t.caption, t.subcaption, "", t.icon, 0, true }, swh = false })
-    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_text_start }, swh = t.swh })
+    table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_text_start }, swh = false })
     for l = 1, string_len(t.text) do
       if t.sound_typing then
         table.insert(anim, { func = PlaySound, args = { t.sound_typing }, swh = false })
       end
       table.insert(anim, { func = ShowMission, args = { t.caption, t.subcaption, string_truncate(t.text, l), t.icon, 0, true }, swh = false })
-      table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_text_char }, swh = t.swh })
+      table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_text_char }, swh = false })
     end
   end
   table.insert(anim, { func = ShowMission, args = { t.caption, t.subcaption, t.text, t.icon, t.display_time_after, t.force_display_after }, swh = false })
-  table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_return }, swh = t.swh_after })
+  table.insert(anim, { func = AnimWait, args = { t.gear, t.delay_return }, swh = false })
   if t.sound_return then
     table.insert(anim, { func = PlaySound, args = { t.sound_return }, swh = false })
   end
+  if t.swh_after then
+    table.insert(anim, { func = AnimSwitchHog, args = { t.gear }, swh = false })
+  end
+  AddSkipFunction(anim, function ()
+    ShowMission(t.caption, t.subcaption, t.text, t.icon, t.display_time_after, t.force_display_after)
+    if t.modal and last_mission_anim == anim then
+      if t.sound_return then
+        PlaySound(t.sound_return)
+      end
+      if t.swh_after then
+        AnimSwitchHog(t.gear)
+      end
+    else
+      HideMission()
+    end
+  end, {})
   AddAnim(anim)
+  last_mission_anim = anim
 end

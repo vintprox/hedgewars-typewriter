@@ -1,11 +1,12 @@
 {
   "name": "hedgewars-typewriter",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Typewriter Hedgewars Lua library",
   "scripts": {
     "start": "npm run watch",
     "watch": "gulp",
     "build": "gulp build",
+    "build:demo": "gulp buildDemo",
     "build:docs": "ldoc --verbose --all ."
   },
   "repository": {
